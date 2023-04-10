@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, lazy } from 'react';
 import { useDispatch } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import { getContactsThunk } from '../redux/operations/contactsThunk';
 
-import ContactForm from './ContactForm/ContactForm';
-import Filter from './Filter/Filter';
-import ContactList from './ContactList/ContactList';
-import { Container, Title } from './App.styles';
-import { Register } from '../pages/Register';
+const Home = lazy(() => import('../pages/Home/Home'));
+const Contacts = lazy(() => import('../pages/Contacts/Contacts'));
+const Login = lazy(() => import('../pages/Login/Login'));
+const Register = lazy(() => import('../pages/Register/Register'));
+
+const Layout = lazy(() => import('./Layout/Layout'));
 
 export function App() {
   const dispatch = useDispatch();
@@ -17,16 +18,15 @@ export function App() {
   }, [dispatch]);
 
   return (
-    <Container>
-      <Title>Phonebook</Title>
-      <ContactForm />
-      <Title>Contacts</Title>
-      <Filter />
-      <ContactList />
-
+    <div>
       <Routes>
-        <Route path="/register" component={Register} />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="login" element={<Login />} />
+          <Route path="register" element={<Register />} />
+          <Route path="contacts" element={<Contacts />} />
+        </Route>
       </Routes>
-    </Container>
+    </div>
   );
 }
