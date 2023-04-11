@@ -1,4 +1,4 @@
-import { useEffect, lazy } from 'react';
+import React, { useEffect, lazy } from 'react';
 import { useDispatch } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
 import { getContactsThunk } from '../redux/operations/contactsThunk';
@@ -18,7 +18,6 @@ export function App() {
   }, [dispatch]);
 
   return (
-    <div>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
@@ -27,6 +26,5 @@ export function App() {
           <Route path="contacts" element={<Contacts />} />
         </Route>
       </Routes>
-    </div>
   );
 }

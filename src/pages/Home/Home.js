@@ -1,5 +1,5 @@
 // import { Outlet } from 'react-router-dom';
-import Contacts from '../Contacts/Contacts';
+// import Contacts from '../Contacts/Contacts';
 // import Loader from '../../components/Loader/Loader';
 
 const Home = () => {
@@ -7,7 +7,7 @@ const Home = () => {
     <div>
       <h2>Contacts</h2>
 
-      <Contacts />
+      {/* <Contacts /> */}
     </div>
   );
 };
