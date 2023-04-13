@@ -1,94 +1,86 @@
 import axios from 'axios';
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import { toast } from 'react-toastify';
 
 axios.defaults.baseURL = 'https://connections-api.herokuapp.com';
 
-const token = {
-  set(token) {
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-  },
-  unset() {
-    axios.defaults.headers.common.Authorization = '';
-  },
+const SIGN_UP_ENDPOINT = '/users/signup';
+const SIGN_IN_ENDPOINT = '/users/login';
+const SIGN_OUT_ENDPOINT = '/users/logout';
+const GET_USER_ENDPOINT = '/users/current';
+
+// Utility to add JWT
+const setAuthHeader = token => {
+  axios.defaults.headers.common.Authorization = `Bearer ${token}`;
 };
 
-/*
- * POST @ /users/signup
- * body: { name, email, password }
- * После успешной регистрации добавляем токен в HTTP-заголовок
- */
-const register = createAsyncThunk('auth/register', async credentials => {
+// Utility to remove JWT
+const clearAuthHeader = () => {
+  axios.defaults.headers.common.Authorization = '';
+};
+// register
+const register = createAsyncThunk(
+  'auth/register',
+  async (credentials, thunkAPI) => {
+    try {
+      const res = await axios.post(SIGN_UP_ENDPOINT, credentials);
+      setAuthHeader(res.data.token);
+      return res.data;
+    } catch (e) {
+      toast.warn('Please try again!');
+      return thunkAPI.rejectWithValue(e.message);
+    }
+  }
+);
+// login
+const logIn = createAsyncThunk('auth/login', async (credentials, thunkAPI) => {
   try {
-    const { data } = await axios.post('/users/signup', credentials);
-    token.set(data.token);
-    return data;
-  } catch (error) {
-    // TODO: Добавить обработку ошибки error.message
+    const res = await axios.post(SIGN_IN_ENDPOINT, credentials);
+    setAuthHeader(res.data.token);
+    return res.data;
+  } catch (e) {
+    toast.warn('Please try again!');
+    return thunkAPI.rejectWithValue(e.message);
+  }
+});
+// logout
+const logOut = createAsyncThunk('auth/logout', async (_, thunkAPI) => {
+  try {
+    await axios.post(SIGN_OUT_ENDPOINT);
+    clearAuthHeader();
+  } catch (e) {
+    return thunkAPI.rejectWithValue(e.message);
   }
 });
 
-/*
- * POST @ /users/login
- * body: { email, password }
- * После успешного логина добавляем токен в HTTP-заголовок
- */
-const logIn = createAsyncThunk('auth/login', async credentials => {
-  try {
-    const { data } = await axios.post('/users/login', credentials);
-    token.set(data.token);
-    return data;
-  } catch (error) {
-    // TODO: Добавить обработку ошибки error.message
-  }
-});
-
-/*
- * POST @ /users/logout
- * headers: Authorization: Bearer token
- * После успешного логаута, удаляем токен из HTTP-заголовка
- */
-const logOut = createAsyncThunk('auth/logout', async () => {
-  try {
-    await axios.post('/users/logout');
-    token.unset();
-  } catch (error) {
-    // TODO: Добавить обработку ошибки error.message
-  }
-});
-/*
- * GET @ /users/current
- * headers:
- *    Authorization: Bearer token
- *
- * 1. Забираем токен из стейта через getState()
- * 2. Если токена нет, выходим не выполняя никаких операций
- * 3. Если токен есть, добавляет его в HTTP-заголовок и выполянем операцию
- */
 const fetchCurrentUser = createAsyncThunk(
   'auth/refresh',
   async (_, thunkAPI) => {
+    // Reading the token from the state via getState()
     const state = thunkAPI.getState();
     const persistedToken = state.auth.token;
 
     if (persistedToken === null) {
-      console.log('Токена нет, уходим из fetchCurrentUser');
-      return thunkAPI.rejectWithValue();
+      // If there is no token, exit without performing any request
+      return thunkAPI.rejectWithValue('Unable to fetch user');
     }
 
-    token.set(persistedToken);
     try {
-      const { data } = await axios.get('/users/current');
-      return data;
-    } catch (error) {
-      // TODO: Добавить обработку ошибки error.message
+      // If there is a token, add it to the HTTP header and perform the request
+      setAuthHeader(persistedToken);
+      const res = await axios.get(GET_USER_ENDPOINT);
+      return res.data;
+    } catch (e) {
+      return thunkAPI.rejectWithValue(e.message);
     }
-  },
+  }
 );
 
-const operations = {
+const authOperations = {
   register,
-  logOut,
   logIn,
+  logOut,
   fetchCurrentUser,
 };
-export default operations;
+
+export default authOperations;

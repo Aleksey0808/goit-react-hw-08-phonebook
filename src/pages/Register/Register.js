@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import authOperations from '../../redux/auth/auth-operations';
@@ -33,7 +32,7 @@ const Register = () => {
     <div>
       <h1>Страница регистрации</h1>
 
-      <form onSubmit={handleSubmit} autoComplete="off">
+      <form onSubmit={handleSubmit}>
         <label>
           Имя
           <input type="text" name="name" value={name} onChange={handleChange} />
