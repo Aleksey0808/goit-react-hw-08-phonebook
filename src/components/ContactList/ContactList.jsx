@@ -1,18 +1,46 @@
+import ContactItem from 'components/ContactItem';
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { getFilteredContacts } from '../../redux/selectors/selectors';
-import { ContactListItem } from '../ContactListItem/ContactListItem';
+import Loader from 'components/Loader';
+import { List, Error } from './ContactList.styled';
+import { useSelector} from 'react-redux';
+import { useFetchContactsQuery} from 'redux/contacts/contactsApi';
+import { getFilter } from 'redux/contacts/contactsSelectors';
 
-function ContactList() {
-  const contacts = useSelector(getFilteredContacts);
+const ContactList = () => {
+  const { data: contacts, error, isLoading } = useFetchContactsQuery();
+
+  const filter = useSelector(getFilter);
+
+  const filterContacts = () => {
+    return (
+      contacts &&
+      contacts.filter(contact =>
+        contact.name.toLowerCase().includes(filter.toLowerCase())
+      )
+    );
+  };
+
+  const contactList = filterContacts();
+  const renderContacts = contacts && contactList.length > 0;
+ 
+
 
   return (
-    <ul>
-      {contacts.map(contacts => (
-        <ContactListItem key={contacts.id} {...contacts} />
-      ))}
-    </ul>
+    <>
+      <List>
+      {renderContacts &&
+        contactList.map(({ id, name, number }) => (
+          <ContactItem id={id} key={id} name={name} number={number} />
+        ))}
+      {isLoading && <Loader />}
+      {error && (
+        <Error>Try adding phone details or contact your administrator</Error>
+      )}
+    </List>
+      
+  
+    </>
   );
-}
+};
 
 export default ContactList;

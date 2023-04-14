@@ -1,68 +1,97 @@
-import { Forma, Label, Text, Buttons } from './ContactForm.styles';
-import { Formik, Field, ErrorMessage } from 'formik';
-import * as yup from 'yup';
-import { useDispatch, useSelector } from 'react-redux';
-import { Report } from 'notiflix/build/notiflix-report-aio';
+import { useState } from 'react';
+import { Form, Label, Input, Button } from './ContactForm.styled';
+import toast, { Toaster } from 'react-hot-toast';
+import { nanoid } from 'nanoid'
+import { useFetchContactsQuery, useCreateContactMutation } from 'redux/contacts/contactsApi';
+import Loader from 'components/Loader';
 
-import { addContactThunk } from 'redux/operations/contactsThunk';
+function ContactForm  () { 
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+  const { data: contacts, isLoading } = useFetchContactsQuery();
+  const [createContact] = useCreateContactMutation();
 
-const schema = yup.object().shape({
-  name: yup.string().required(),
-  number: yup.number().positive().required(),
-});
 
-const ContactForm = () => {
-  const contacts = useSelector(state => state.contacts.items);
-
-  const dispatch = useDispatch();
-  const handleSubmit = (values, { resetForm }) => {
-    contacts.some(item => item.name.toLowerCase() === values.name.toLowerCase())
-      ? Report.warning(`${values.name}`, 'Such a name already exists!', 'OK')
-      : dispatch(addContactThunk({ ...values }));
-
-    resetForm();
+  const handleChange = e => {
+    const { name, value } = e.currentTarget;
+    
+    switch (name) {
+      case 'name': setName(value);
+        break;
+      case 'number': setNumber(value);
+        break;
+      default: return;
+    }
   };
 
-  const initialValues = {
-    name: '',
-    number: '',
+  const addContact = data => {
+    const contactName = contacts.map(contact => contact.name.toLowerCase());
+    const isAdding = contactName.includes(data.name.toLowerCase());
+
+    if (!isAdding) {
+      createContact(data);
+      reset();
+      toast.success(`😃 Contact, ${name} successfully added`);
+    } else {
+      toast.error(`😏${data.name} is already in contacts.`);
+    }
   };
 
-  return (
-    <Formik
-      initialValues={initialValues}
-      onSubmit={handleSubmit}
-      validationSchema={schema}
-    >
-      <Forma>
-        <Label htmlFor="name">
-          <Text>Name</Text>
-          <Field
+    const handleSubmit = e => {
+   e.preventDefault();
+
+    const newContact = {
+      id: nanoid(),
+      name,
+      number,
+    };
+
+    addContact(newContact);
+  };
+
+   const reset = () => {
+    setName('');
+    setNumber('');
+  };
+
+    return (
+      <Form onSubmit={handleSubmit} autoComplete='off'>
+        <Label>
+          Name
+          <Input
             type="text"
+            id="name_input"
             name="name"
+            value={name}
+            onChange={handleChange}
+            placeholder="Enter your name..."
             pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
             title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
             required
           />
-          <ErrorMessage name="name" component="div" />
         </Label>
 
-        <Label htmlFor="number">
-          <Text>Phone</Text>
-          <Field
+        <Label>
+          Number
+          <Input
             type="tel"
+            id="name_input"
             name="number"
+            value={number}
+            onChange={handleChange}
+            placeholder="Enter your number..."
             pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
             title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-            required
+            required            
           />
-          <ErrorMessage name="number" component="div" />
         </Label>
 
-        <Buttons type="submit">Add contact</Buttons>
-      </Forma>
-    </Formik>
-  );
+        <Button type="submit" >Add contact</Button>
+        <Toaster />
+        {isLoading && <Loader />}
+      </Form>
+    );
+
 };
 
 export default ContactForm;
