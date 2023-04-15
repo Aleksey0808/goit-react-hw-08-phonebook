@@ -1,4 +1,4 @@
-import styled from '@emotion/styled'
+import styled from '@emotion/styled';
 
 export const List = styled.ul`
   display: flex;
@@ -12,5 +12,5 @@ export const Error = styled.h2`
   line-height: 1.62;
   letter-spacing: 0.03em;
   text-align: center;
-  // color: #232323;
+  color: #232323;
 `;
